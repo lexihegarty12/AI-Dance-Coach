@@ -1,0 +1,11 @@
+services:
+  dance-coach:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      MPLCONFIGDIR: /tmp/matplotlib
+    command: streamlit run app.py --server.address=0.0.0.0 --server.port=8501

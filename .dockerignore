@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.py[cod]
+*.mov
+*.docx
+*.pdf
+output
+step one
+step two
+.git
+.DS_Store
+analysis_output/selected_clips
+analysis_output/full_training_overview.jpg
+analysis_output/technique_review_sheet.jpg

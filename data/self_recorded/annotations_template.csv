@@ -1,0 +1,3 @@
+video_id,filename,movement_label,timestamp_start_seconds,timestamp_end_seconds,category,technical_feedback,severity,annotation_confidence,reviewer_notes
+example_001,arabesque_penche_take_001.mp4,arabesque penche,15.0,16.0,position closure,Close all the way to fifth position,needs_attention,high,
+example_001,arabesque_penche_take_001.mp4,arabesque penche,20.0,22.0,hip alignment,Keep the working hip down,needs_attention,high,

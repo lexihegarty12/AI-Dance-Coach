@@ -1,0 +1,22 @@
+{
+  "developpe_arabesque_penche": {
+    "movement": "arabesque penche",
+    "annotation_source": "dancer-provided technical review",
+    "annotations": [
+      {
+        "start_seconds": 15.0,
+        "end_seconds": 16.0,
+        "label": "Close all the way to fifth position",
+        "category": "position closure",
+        "severity": "needs_attention"
+      },
+      {
+        "start_seconds": 20.0,
+        "end_seconds": 22.0,
+        "label": "Keep the working hip down",
+        "category": "hip alignment",
+        "severity": "needs_attention"
+      }
+    ]
+  }
+}
