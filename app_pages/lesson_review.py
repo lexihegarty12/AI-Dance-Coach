@@ -2,14 +2,15 @@ import base64
 import tempfile
 from pathlib import Path
 
-import cv2
 import pandas as pd
 import streamlit as st
 
 from app_core import LESSONS, load_technique_data
-from src.analyze_technique import analyze_video
-from src.analyze_turnout_proxy import analyze as analyze_tendu
-from src.render_feedback_video import render
+
+try:
+    import cv2
+except ModuleNotFoundError:
+    cv2 = None
 
 
 BACKGROUND_PATH = Path(__file__).resolve().parents[1] / "assets" / "ballet_studio_barre_background.png"
@@ -19,6 +20,8 @@ MAX_UPLOAD_SECONDS = 60
 
 def video_metadata(video_bytes: bytes, filename: str) -> tuple[float, int, int] | None:
     """Return duration, width, and height for an uploaded clip."""
+    if cv2 is None:
+        return None
     suffix = Path(filename).suffix.lower() or ".mp4"
     with tempfile.NamedTemporaryFile(suffix=suffix) as temporary_file:
         temporary_file.write(video_bytes)
@@ -35,9 +38,31 @@ def video_metadata(video_bytes: bytes, filename: str) -> tuple[float, int, int] 
     return duration, width, height
 
 
+def fallback_uploaded_video(video_bytes: bytes, filename: str, prefix: str) -> dict[str, str]:
+    """Keep the hosted app usable when optional computer vision packages are unavailable."""
+    work_dir = Path(tempfile.mkdtemp(prefix=prefix))
+    suffix = Path(filename).suffix.lower() or ".mp4"
+    input_path = work_dir / f"uploaded_video{suffix}"
+    input_path.write_bytes(video_bytes)
+    return {
+        "input": str(input_path),
+        "feedback": str(input_path),
+        "annotated": str(work_dir / "annotated_sample.jpg"),
+        "technique": str(work_dir / "technique_results.csv"),
+        "fallback": "true",
+    }
+
+
 @st.cache_data(show_spinner=False, max_entries=4)
 def process_uploaded_video(video_bytes: bytes, filename: str, camera_view: str) -> dict[str, str]:
     """Analyze and render one uploaded demi-plié clip."""
+    if cv2 is None:
+        return fallback_uploaded_video(video_bytes, filename, "dance_coach_preview_")
+    try:
+        from src.analyze_technique import analyze_video
+        from src.render_feedback_video import render
+    except ModuleNotFoundError:
+        return fallback_uploaded_video(video_bytes, filename, "dance_coach_preview_")
     work_dir = Path(tempfile.mkdtemp(prefix="dance_coach_"))
     suffix = Path(filename).suffix.lower() or ".mp4"
     input_path = work_dir / f"uploaded_video{suffix}"
@@ -63,6 +88,13 @@ def process_uploaded_video(video_bytes: bytes, filename: str, camera_view: str) 
 @st.cache_data(show_spinner=False, max_entries=4)
 def process_uploaded_tendu(video_bytes: bytes, filename: str, camera_view: str) -> dict[str, str]:
     """Analyze and render one uploaded front-view tendu clip."""
+    if cv2 is None:
+        return fallback_uploaded_video(video_bytes, filename, "dance_coach_tendu_preview_")
+    try:
+        from src.analyze_turnout_proxy import analyze as analyze_tendu
+        from src.render_feedback_video import render
+    except ModuleNotFoundError:
+        return fallback_uploaded_video(video_bytes, filename, "dance_coach_tendu_preview_")
     work_dir = Path(tempfile.mkdtemp(prefix="dance_coach_tendu_"))
     suffix = Path(filename).suffix.lower() or ".mp4"
     input_path = work_dir / f"uploaded_video{suffix}"
@@ -143,20 +175,23 @@ if lesson.get("analysis") in ("plie", "tendu"):
             st.error("This video is larger than 100 MB. Please upload a shorter clip or compress it first.")
             st.stop()
         metadata = video_metadata(video_bytes, uploaded_file.name)
-        if metadata is None:
+        if metadata is None and cv2 is not None:
             st.error("We could not read this video. Try exporting it as MP4 or MOV and upload it again.")
             st.stop()
-        duration, width, height = metadata
-        if duration <= 0:
-            st.error("We could not determine the video duration. Please try another clip.")
-            st.stop()
-        if duration > MAX_UPLOAD_SECONDS:
-            st.error(f"This clip is {duration:.1f} seconds long. Please upload a clip no longer than 60 seconds.")
-            st.stop()
-        if width < 320 or height < 320:
-            st.error("This video is too small to analyze reliably. Please use a higher-resolution recording.")
-            st.stop()
-        st.caption(f"Ready to analyze · {duration:.1f} seconds · {width}×{height}")
+        if metadata is None:
+            st.caption("Ready to review · hosted preview mode")
+        else:
+            duration, width, height = metadata
+            if duration <= 0:
+                st.error("We could not determine the video duration. Please try another clip.")
+                st.stop()
+            if duration > MAX_UPLOAD_SECONDS:
+                st.error(f"This clip is {duration:.1f} seconds long. Please upload a clip no longer than 60 seconds.")
+                st.stop()
+            if width < 320 or height < 320:
+                st.error("This video is too small to analyze reliably. Please use a higher-resolution recording.")
+                st.stop()
+            st.caption(f"Ready to analyze · {duration:.1f} seconds · {width}×{height}")
         with st.spinner(f"Analyzing your {selected_lesson.lower()}..."):
             if lesson.get("analysis") == "tendu":
                 processed = process_uploaded_tendu(video_bytes, uploaded_file.name, camera_view)
@@ -165,6 +200,7 @@ if lesson.get("analysis") in ("plie", "tendu"):
         video_path = Path(processed["feedback"])
         annotated_path = Path(processed["annotated"])
         technique_path = Path(processed["technique"])
+        hosted_preview = processed.get("fallback") == "true"
 
 technique = load_technique_data(technique_path)
 pose_quality = None
@@ -179,7 +215,11 @@ with video_col:
         st.video(str(video_path))
         if lesson.get("analysis") in ("plie", "tendu"):
             cue_name = "knee" if lesson["analysis"] == "plie" and camera_view == "Front" else "posture" if lesson["analysis"] == "plie" else "foot alignment"
-            st.caption(f"Analyzed angle: {camera_view} view · Green lines show the {cue_name} cue.")
+            if hosted_preview:
+                st.caption(f"Selected angle: {camera_view} view · Practice cue: {cue_name}.")
+                st.caption("Hosted preview mode: landmark overlays are unavailable in this runtime.")
+            else:
+                st.caption(f"Analyzed angle: {camera_view} view · Green lines show the {cue_name} cue.")
 
 with cue_col:
     with st.container(border=True):
