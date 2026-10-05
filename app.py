@@ -3,18 +3,18 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="AI Dance Coach Demo",
+    page_title="AI Dance Coach | Practice review",
     page_icon=":material/accessibility_new:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 with st.sidebar:
-    st.markdown("## :material/accessibility_new: AI Dance Coach — Demo")
-    st.caption("Arabesque penché feedback demo")
-    st.markdown("### Lesson")
-    st.caption("Arabesque penché")
-    st.caption("Prototype • camera-dependent practice cues")
+    st.markdown("## AI Dance Coach")
+    st.caption("Focused feedback for everyday ballet practice")
+    st.markdown("**Current lessons**")
+    st.caption("Demi-plié in first · Tendu")
+    st.caption("Camera-dependent practice cues — not grades or medical advice")
 
 page = st.navigation(
     [

@@ -1,0 +1,22 @@
+video_id,file_name,dancer_id,recording_session,movement_group,camera_view,correction_category,correction_notes,permission_status,review_status
+1,dancer01_session01_plie_front_good.mov,1,dancer01_session01,plie,front,heel_lift,heels lift. also more energy in the hands needed,,correction_noted
+2,dancer01_session02_plie_front_good.mov,1,dancer01_session02,plie,front,knee_tracking,heels lift. more energy in hand. Shoulders down. Good turnout good knee over toes. Foot sickles when rond de jame from.  second to fourth. In fifth position front foot is not closed all the way,,correction_noted
+3,dancer01_session03_plie_front_good.mov,1,dancer01_session03,plie,front,,,,needs_review
+4,dancer01_session04_plies_front_bad.mov,1,dancer01_session04,plie,front,,,,needs_review
+5,dancer_01_session05_tendus_front_good.MOV,1,dancer01_session05,tendu,front,foot_alignment,working foot sickles in tendu front. foot should go straight back in tendu back,,correction_noted
+6,dancer01_session06_tendus_front_good.MOV,1,dancer01_session06,tendu,front,foot_alignment,working foot sickles in tendu front. foot should go straight back in tendu back,,correction_noted
+7,dancer01_session07_tendus_side_good.MOV,1,dancer01_session07,tendu,side,foot_alignment,rotate the working leg from the top of the foot. Close the ribs. Do not twist the hips when tendu back. More rotation from the hip for tendu front,,correction_noted
+8,dancer01_session08_tendu_plies_front_good.MOV,1,dancer01_session08,tendu,front,foot_alignment,foot is sickled in the front. Foot sould be more winged. Straighter legs. Plies in first are good. Good working through the feet,,correction_noted
+9,dancer01_session09_plies_side_bad.MOV,1,dancer01_session09,plie,side,knee_tracking,knees not over ties. Ribs open,,correction_noted
+10,dancer01_session10_plies_tendus_45_good.MOV,1,dancer01_session10,plie_and_tendu,45_degree,knee_tracking,knees could go over toes more. Back tendu could be more corssed back. Foot sickles a little when closes to fifth,,correction_noted
+11,dancer01_session11_arabesque_good_45.MOV,1,dancer01_session11,arabesque,45_degree,rib_alignment,shoulders down. More turnout on working leg. Engage core,,correction_noted
+12,dancer01_session12_tendus_45_good.MOV,1,dancer01_session12,tendu,45_degree,foot_alignment,more turnout and shape the foot better,,correction_noted
+13,dancer01_session13_tendu_45_good.MOV,1,dancer01_session13,tendu,45_degree,,,,needs_review
+14,dancer01_session14_plies_side_good.MOV,1,dancer01_session14,plie,side,knee_tracking,knees need to track over toes more. Engage core and close the ribs,,correction_noted
+15,dancer02_session01_plie_side.mp4,2,dancer02_session01,plie,side,knee_tracking,knees track over toes better,,correction_noted
+16,dancer02_session01_tendu_side.mp4,2,dancer02_session01,tendu,side,foot_alignment,more turnout and shape the foot better,,correction_noted
+17,dancer03_session01_plies_front_good.mov,3,dancer03_session01,plie,front,,,,needs_review
+18,dancer03_session01_tendus_front_good.mov,3,dancer03_session01,tendu,front,,,,needs_review
+19,dancer03_session01_tendusfifth_front_good.mov,3,dancer03_session01,tendu,front,,,,needs_review
+20,dancer03_session02_plies_45_good.mov,3,dancer03_session02,plie,45_degree,,,,needs_review
+21,dancer03_session02_tendus_45_good.mov,3,dancer03_session02,tendu,45_degree,,,,needs_review

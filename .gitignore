@@ -5,6 +5,8 @@ analysis_output/
 models/
 analysis_output/web_clips/
 data/test_videos/
+data/self_recorded/videos/
+raw_dance_vids/
 *.mov
 *.mp4
 *.avi

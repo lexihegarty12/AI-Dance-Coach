@@ -42,3 +42,25 @@ To render dancer-facing visual feedback for a clip:
 The rendered video highlights the detected body and displays a visual cue when
 torso lean exceeds the current alert threshold. This is a practice prompt, not
 a definitive technique judgment.
+
+## Search YouTube metadata
+
+The project includes a metadata-only YouTube search helper. It stores titles,
+links, channel names, descriptions, dates, and thumbnails; it does not download
+video or audio files.
+
+Create a YouTube Data API v3 key, then run. The script will securely prompt for
+the key if `YOUTUBE_API_KEY` is not already set:
+
+```bash
+export YOUTUBE_API_KEY="your-key"
+.venv/bin/python src/search_youtube.py "beginner ballet tendu tutorial" \
+  --max-results 10 \
+  --output analysis_output/youtube_search.json
+```
+
+The script uses the virtual environment's `certifi` certificate bundle when it
+is installed, so the TLS setting does not depend on a one-off terminal export.
+
+Use only videos that are appropriately licensed or whose owners have given
+permission before downloading, analyzing, or adding them to a training set.
