@@ -3,6 +3,8 @@ __pycache__/
 .venv/
 analysis_output/
 models/
+!models/
+!models/pose_landmarker_lite.task
 analysis_output/web_clips/
 data/test_videos/
 data/self_recorded/videos/
@@ -10,6 +12,7 @@ raw_dance_vids/
 *.mov
 *.mp4
 *.avi
+.streamlit/secrets.toml
 
 # Keep the single polished demo output available to cloud deployments.
 !demo_assets/
