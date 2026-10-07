@@ -1,9 +1,7 @@
-streamlit==1.64.0
+streamlit==1.50.0
 pandas==2.2.3
 certifi>=2024.2.2
-# MediaPipe 0.10.18 ships Linux wheels through Python 3.12.
-# Community Cloud should be configured to use Python 3.12 for full analysis.
-numpy<2; python_version < '3.13'
-opencv-python-headless==4.11.0.86; python_version < '3.13'
-mediapipe==0.10.18; python_version < '3.13'
-imageio-ffmpeg==0.6.0; python_version < '3.13'
+numpy<2
+opencv-python-headless==4.11.0.86
+mediapipe==0.10.18
+imageio-ffmpeg==0.6.0
