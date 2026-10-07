@@ -1,9 +1,9 @@
 import streamlit as st
 
-from app_core import CORRECTION_PATHWAYS, recommend_video_clips
+from app_core import CORRECTION_PATHWAYS
 
 
-st.title("Personalized training plan", icon=":material/calendar_month:")
+st.title("Personalized training plan")
 st.write(
     "Turn one technique correction into a focused practice week. Choose the correction that best matches your latest review, then adjust the plan to fit your practice time."
 )
@@ -16,14 +16,9 @@ with st.form("training_plan_form"):
     practice_stage = st.selectbox(
         "Where are you with this correction?",
         ["First time with this cue", "Still inconsistent", "Ready to integrate"],
-        help="This changes which teaching clips and drills appear first.",
+        help="This changes which drills and practice emphasis appear first.",
     )
-    resource_preference = st.segmented_control(
-        "Resource preference",
-        ["Videos", "Videos and articles"],
-        default="Videos",
-    )
-    submitted = st.form_submit_button("Build my plan", type="primary", icon=":material/auto_awesome:")
+    submitted = st.form_submit_button("Build my plan", type="primary")
 
 if "training_plan_submitted" not in st.session_state:
     st.session_state.training_plan_submitted = False
@@ -34,7 +29,6 @@ if submitted:
     st.session_state.training_plan_days = practice_days
     st.session_state.training_plan_minutes = minutes or "20 minutes"
     st.session_state.training_plan_stage = practice_stage
-    st.session_state.training_plan_resources = resource_preference or "Videos"
 
 if not st.session_state.training_plan_submitted:
     with st.container(border=True):
@@ -46,17 +40,16 @@ selected_name = st.session_state.training_plan_correction
 pathway = CORRECTION_PATHWAYS[selected_name]
 days = st.session_state.training_plan_days
 minutes = st.session_state.training_plan_minutes
-resource_preference = st.session_state.training_plan_resources
 practice_stage = st.session_state.get("training_plan_stage", "First time with this cue")
 
 with st.container(border=True):
     st.caption(f"{st.session_state.training_plan_level} · {pathway['positions']} · {days} practice days · {minutes}")
     st.subheader(selected_name)
     st.write(pathway["summary"])
-    st.info(f"Practice cue: {pathway['cue']}", icon=":material/lightbulb:")
+    st.info(f"Practice cue: {pathway['cue']}")
     st.caption(f"Personalized for: {practice_stage.lower()}")
 
-st.subheader("Your weekly structure", icon=":material/event:")
+st.subheader("Your weekly structure")
 schedule = [
     ("Day 1", "Learn the pathway", pathway["exercises"][0]),
     ("Day 2", "Build control", pathway["exercises"][1]),
@@ -73,54 +66,9 @@ for day, focus, exercise in schedule[:days]:
         st.write(f"{exercise[0]} · {exercise[1]}")
         st.caption(exercise[2])
 
-st.subheader("Teacher video notes", icon=":material/school:")
-st.caption("Watch a focused reference clip, then use the annotated teaching points as a short practice checklist. Notes are concise editorial takeaways, not a replacement for the full lesson or an instructor.")
-
-videos = recommend_video_clips(selected_name, st.session_state.training_plan_level, practice_stage, minutes)
-if videos:
-    carousel_key = f"video_index_{selected_name}"
-    if carousel_key not in st.session_state:
-        st.session_state[carousel_key] = 0
-    video_index = st.session_state[carousel_key] % len(videos)
-    video = videos[video_index]
-
-    with st.container(border=True):
-        st.markdown(f'<div class="report-kicker">Reference {video_index + 1} of {len(videos)}</div>', unsafe_allow_html=True)
-        st.markdown(f"### {video['title']}")
-        st.caption(video["channel"])
-        st.markdown(
-            f'<div class="assessment-note" style="margin:.6rem 0 1rem">Selected for a <strong>{st.session_state.training_plan_level.lower()}</strong> dancer who is <strong>{practice_stage.lower()}</strong>.</div>',
-            unsafe_allow_html=True,
-        )
-        video_col, notes_col = st.columns([1.25, 1], gap="large")
-        with video_col:
-            st.video(video["url"])
-            st.link_button("Open source video", video["source_url"], icon=":material/open_in_new:")
-        with notes_col:
-            st.markdown("**Annotated takeaways**")
-            for label, note in video["annotations"]:
-                st.markdown(
-                    f'<div class="assessment-note" style="margin-bottom:.65rem"><strong>{label}</strong><br>{note}</div>',
-                    unsafe_allow_html=True,
-                )
-
-        with st.container(horizontal=True, horizontal_alignment="distribute"):
-            previous = st.button("Previous", icon=":material/arrow_back:", key=f"previous_{selected_name}")
-            st.caption(f"Clip {video_index + 1} / {len(videos)}")
-            next_video = st.button("Next", icon=":material/arrow_forward:", key=f"next_{selected_name}")
-        if previous:
-            st.session_state[carousel_key] = (video_index - 1) % len(videos)
-            st.rerun()
-        if next_video:
-            st.session_state[carousel_key] = (video_index + 1) % len(videos)
-            st.rerun()
-else:
-    with st.container(border=True):
-        st.info("No curated video has been added for this correction yet.", icon=":material/video_library:")
-
 with st.container(border=True):
-    st.subheader("After your practice week", icon=":material/replay:")
+    st.subheader("After your practice week")
     st.write("Record the same movement from the same camera angle and return to Lesson review. Compare one correction at a time instead of trying to change everything at once.")
-    st.page_link("app_pages/lesson_review.py", label="Open lesson review", icon=":material/ondemand_video:")
+    st.caption("Use **Lesson review** in the navigation above when you are ready to record your next attempt.")
 
-st.warning("This plan is practice guidance, not a medical assessment or a replacement for an in-person teacher. Stop if you feel pain.", icon=":material/health_and_safety:")
+st.warning("This plan is practice guidance, not a medical assessment or a replacement for an in-person teacher. Stop if you feel pain.")

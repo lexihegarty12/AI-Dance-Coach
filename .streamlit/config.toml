@@ -1,21 +1,21 @@
 [theme]
 base = "light"
-primaryColor = "#17324D"
-backgroundColor = "#FBF9F6"
-secondaryBackgroundColor = "#F3EEE9"
-textColor = "#24303B"
-linkColor = "#8F5261"
-borderColor = "#DEDBD6"
-greenColor = "#2F7A5B"
-orangeColor = "#9A6A16"
-redColor = "#A64745"
+primaryColor = "#1C1B1A"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#55534F"
+linkColor = "#3F3D3A"
+borderColor = "#E4E2DE"
+greenColor = "#6F8A6A"
+orangeColor = "#B98A4A"
+redColor = "#9B5A55"
 font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-headingFont = "Cormorant Garamond:https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap"
-baseRadius = "10px"
-buttonRadius = "9px"
+headingFont = "Krona One:https://fonts.googleapis.com/css2?family=Krona+One&display=swap"
+baseRadius = "24px"
+buttonRadius = "999px"
 showWidgetBorder = true
 headingFontSizes = ["48px", "32px", "24px", "18px", "15px", "13px"]
-headingFontWeights = [600, 600, 600, 600, 600, 600]
+headingFontWeights = [400, 400, 400, 400, 400, 400]
 
 [client]
 showErrorDetails = "type"

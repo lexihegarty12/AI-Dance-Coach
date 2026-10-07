@@ -6,18 +6,17 @@ from app_state import account_export_json, delete_local_account_data, initialize
 initialize_account_state()
 profile = st.session_state.account_profile
 
-st.title("My account", icon=":material/account_circle:")
+st.title("My account")
 st.write("Manage your ballet goals, training preferences, saved plans, and privacy choices.")
 
 is_logged_in = bool(getattr(st.user, "is_logged_in", False))
 if is_logged_in:
     identity = getattr(st.user, "email", None) or getattr(st.user, "name", None) or "Signed-in user"
-    st.success(f"Signed in as {identity}", icon=":material/verified_user:")
+    st.success(f"Signed in as {identity}")
 else:
     st.info(
         "Local demo mode is active. Your settings are available during this browser session only. "
         "Secure cross-session accounts will be enabled after an OIDC provider and database are connected.",
-        icon=":material/info:",
     )
 
 with st.form("profile_form"):
@@ -40,7 +39,7 @@ with st.form("profile_form"):
         index=["10 minutes", "20 minutes", "30 minutes", "45 minutes", "60 minutes"].index(profile["minutes_per_session"]),
     )
     profile["equipment"] = st.text_input("Available equipment", value=profile["equipment"])
-    if st.form_submit_button("Save profile", type="primary", icon=":material/save:"):
+    if st.form_submit_button("Save profile", type="primary"):
         st.session_state.account_profile = profile
         st.success("Profile saved for this session.")
 
@@ -66,12 +65,11 @@ with st.container(border=True):
         data=account_export_json(),
         file_name="ballet_technique_platform_account.json",
         mime="application/json",
-        icon=":material/download:",
     )
 
 with st.expander("Delete local account data", expanded=False):
     st.warning("This removes the profile, saved plans, review history, and bookmarks from this session.")
-    if st.button("Delete local data", type="secondary", icon=":material/delete:"):
+    if st.button("Delete local data", type="secondary"):
         delete_local_account_data()
         st.success("Local account data deleted.")
         st.rerun()

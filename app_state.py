@@ -46,3 +46,9 @@ def account_export_json() -> str:
 def delete_local_account_data() -> None:
     for key in ("account_profile", "saved_training_plans", "review_history", "bookmarked_resources"):
         st.session_state.pop(key, None)
+
+
+def save_review_session(session: dict[str, object]) -> None:
+    """Store one private practice review in the current account session."""
+    initialize_account_state()
+    st.session_state.review_history.append(session)

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import cv2
 import mediapipe as mp
@@ -13,6 +15,81 @@ from mediapipe.tasks.python import vision
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = PROJECT_ROOT / "models" / "pose_landmarker_lite.task"
+
+
+def point_distance(first: object, second: object) -> float:
+    return math.hypot(first.x - second.x, first.y - second.y)
+
+
+def joint_angle(first: object, vertex: object, last: object) -> float:
+    """Return the angle at vertex in degrees."""
+    first_vector = (first.x - vertex.x, first.y - vertex.y)
+    last_vector = (last.x - vertex.x, last.y - vertex.y)
+    denominator = math.hypot(*first_vector) * math.hypot(*last_vector)
+    if denominator <= 1e-8:
+        return 0.0
+    cosine = max(-1.0, min(1.0, sum(a * b for a, b in zip(first_vector, last_vector)) / denominator))
+    return math.degrees(math.acos(cosine))
+
+
+def arabesque_metrics(landmarks: object) -> dict[str, float | int | None]:
+    """Extract cautious, camera-dependent Arabesque positioning measures."""
+    ankle_index = 27 if landmarks[27].y > landmarks[28].y else 28
+    support_side = 0 if ankle_index == 27 else 1
+    support_hip_index = 23 if support_side == 0 else 24
+    support_knee_index = 25 if support_side == 0 else 26
+    working_hip_index = 24 if support_side == 0 else 23
+    working_knee_index = 26 if support_side == 0 else 25
+    working_ankle_index = 28 if support_side == 0 else 27
+    support_foot_index = 31 if support_side == 0 else 32
+    relevant = (11, 12, 23, 24, support_knee_index, ankle_index, working_hip_index, working_knee_index, working_ankle_index)
+    confidence = min(landmarks[index].visibility for index in relevant)
+    if confidence < 0.55:
+        return {
+            "supporting_hip_offset_ratio": None,
+            "working_leg_straightness_degrees": None,
+            "torso_lean_degrees": None,
+            "shoulder_hip_offset_ratio": None,
+            "standing_foot_line_degrees": None,
+            "supporting_side": support_side,
+            "confidence": confidence,
+        }
+
+    left_shoulder, right_shoulder = landmarks[11], landmarks[12]
+    left_hip, right_hip = landmarks[23], landmarks[24]
+    shoulder_mid = SimpleNamespace(
+        x=(left_shoulder.x + right_shoulder.x) / 2,
+        y=(left_shoulder.y + right_shoulder.y) / 2,
+    )
+    hip_mid = SimpleNamespace(
+        x=(left_hip.x + right_hip.x) / 2,
+        y=(left_hip.y + right_hip.y) / 2,
+    )
+    torso_length = max(point_distance(shoulder_mid, hip_mid), 1e-6)
+    torso_lean = abs(math.degrees(math.atan2(shoulder_mid.x - hip_mid.x, hip_mid.y - shoulder_mid.y)))
+    shoulder_hip_offset = abs(shoulder_mid.x - hip_mid.x) / torso_length
+    shoulder_line = math.degrees(math.atan2(right_shoulder.y - left_shoulder.y, right_shoulder.x - left_shoulder.x))
+    hip_line = math.degrees(math.atan2(right_hip.y - left_hip.y, right_hip.x - left_hip.x))
+    shoulder_hip_line_difference = abs(shoulder_line - hip_line)
+    shoulder_hip_line_difference = min(shoulder_hip_line_difference, 180 - shoulder_hip_line_difference)
+
+    support_hip = landmarks[support_hip_index]
+    support_ankle = landmarks[ankle_index]
+    support_leg_length = max(point_distance(support_hip, support_ankle), 1e-6)
+    working_leg_straightness = joint_angle(landmarks[working_hip_index], landmarks[working_knee_index], landmarks[working_ankle_index])
+    support_foot = landmarks[support_foot_index]
+    standing_foot_line = abs(math.degrees(math.atan2(support_foot.y - support_ankle.y, support_foot.x - support_ankle.x)))
+
+    return {
+        "supporting_hip_offset_ratio": abs(support_hip.x - support_ankle.x) / support_leg_length,
+        "working_leg_straightness_degrees": working_leg_straightness,
+        "torso_lean_degrees": torso_lean,
+        "shoulder_hip_offset_ratio": shoulder_hip_offset,
+        "shoulder_hip_line_difference_degrees": shoulder_hip_line_difference,
+        "standing_foot_line_degrees": standing_foot_line,
+        "supporting_side": support_side,
+        "confidence": confidence,
+    }
 
 
 def hip_alignment(landmarks: object) -> tuple[float | None, int, int, float | None]:
@@ -60,7 +137,11 @@ def analyze_video(video_path: Path, output_dir: Path) -> None:
             confidence = None
             if result.pose_landmarks:
                 landmarks = result.pose_landmarks[0]
-                offset, hip_index, ankle_index, confidence = hip_alignment(landmarks)
+                metrics = arabesque_metrics(landmarks)
+                offset = metrics["supporting_hip_offset_ratio"]
+                confidence = metrics["confidence"]
+                ankle_index = 27 if metrics["supporting_side"] == 0 else 28
+                hip_index = 23 if metrics["supporting_side"] == 0 else 24
                 if frame_index == sample_index:
                     annotated_sample = frame.copy()
                     height, width = annotated_sample.shape[:2]
@@ -69,9 +150,21 @@ def analyze_video(video_path: Path, output_dir: Path) -> None:
                     hip = (int(landmarks[hip_index].x * width), int(landmarks[hip_index].y * height))
                     ankle = (int(landmarks[ankle_index].x * width), int(landmarks[ankle_index].y * height))
                     cv2.line(annotated_sample, hip, ankle, (0, 220, 0), 8, cv2.LINE_AA)
-                    label = f"Supporting hip offset: {offset:.2f}" if offset is not None else "Hip alignment: low confidence"
+                    label = f"Hip offset {offset:.2f} · Leg {metrics['working_leg_straightness_degrees']:.0f}°" if offset is not None else "Arabesque alignment: low confidence"
                     cv2.putText(annotated_sample, label, (24, 42), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 220, 0), 2, cv2.LINE_AA)
-            rows.append({"frame_index": frame_index, "timestamp_seconds": round(frame_index / fps, 3), "supporting_hip_offset_ratio": None if offset is None else round(offset, 4), "confidence": confidence})
+            else:
+                metrics = {"supporting_hip_offset_ratio": None, "working_leg_straightness_degrees": None, "torso_lean_degrees": None, "shoulder_hip_offset_ratio": None, "shoulder_hip_line_difference_degrees": None, "standing_foot_line_degrees": None, "confidence": None}
+            rows.append({
+                "frame_index": frame_index,
+                "timestamp_seconds": round(frame_index / fps, 3),
+                "supporting_hip_offset_ratio": metrics["supporting_hip_offset_ratio"],
+                "working_leg_straightness_degrees": metrics["working_leg_straightness_degrees"],
+                "torso_lean_degrees": metrics["torso_lean_degrees"],
+                "shoulder_hip_offset_ratio": metrics["shoulder_hip_offset_ratio"],
+                "shoulder_hip_line_difference_degrees": metrics.get("shoulder_hip_line_difference_degrees"),
+                "standing_foot_line_degrees": metrics["standing_foot_line_degrees"],
+                "confidence": metrics["confidence"],
+            })
             frame_index += 1
     capture.release()
     if annotated_sample is None:

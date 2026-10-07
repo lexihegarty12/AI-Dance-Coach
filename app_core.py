@@ -7,9 +7,31 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_DIR = ROOT / "analysis_output"
+REFERENCE_BENCHMARK_DIR = RESULTS_DIR / "reference_benchmarks"
 DEMO_RESULTS_DIR = ROOT / "demo_assets"
 ANNOTATIONS_PATH = ROOT / "data" / "coaching_annotations.json"
 REFERENCE_LIBRARY_PATH = ROOT / "data" / "reference_library.json"
+REFERENCE_VIDEO_DIR = ROOT / "Reference Videos"
+
+LOCAL_REFERENCE_VIDEOS = {
+    ("bad_plie_front_metrics", "Front"): [REFERENCE_VIDEO_DIR / "plie_tendu_reference" / "reference_plie_in_first_.mov"],
+    ("bad_plie_front_metrics", "Side"): [REFERENCE_VIDEO_DIR / "plie_tendu_reference" / "reference_plie_side.mov"],
+    ("tendu_front_alignment", "Front"): [
+        REFERENCE_VIDEO_DIR / "plie_tendu_reference" / "reference_tendu_from_first_front.mov",
+        REFERENCE_VIDEO_DIR / "plie_tendu_reference" / "reference_tendu_fifth_front.mov",
+    ],
+    ("tendu_front_alignment", "Side"): [REFERENCE_VIDEO_DIR / "plie_tendu_reference" / "reference_tendu_side.mov"],
+    # The Arabesque set is kept internal: it supplies positioning benchmarks,
+    # but the reference clips are never surfaced in the learner-facing UI.
+    ("arabesque_reference", "Front"): [
+        REFERENCE_VIDEO_DIR / "arabesque reference" / "reference_first_arabeque.mov",
+        REFERENCE_VIDEO_DIR / "arabesque reference" / "reference_pique_arabwque.mov",
+    ],
+    ("arabesque_reference", "Side"): [
+        REFERENCE_VIDEO_DIR / "arabesque reference" / "reference_first_arabeque.mov",
+        REFERENCE_VIDEO_DIR / "arabesque reference" / "reference_pique_arabwque.mov",
+    ],
+}
 
 LESSONS = {
     "Demi-plié in first": {
@@ -27,6 +49,14 @@ LESSONS = {
         "level": "Foundational",
         "duration": "00:35",
         "analysis": "tendu",
+    },
+    "Arabesque": {
+        "slug": "arabesque_reference",
+        "description": "A rear-view arabesque with a focus on supporting-hip stability and a long working leg.",
+        "focus": "Keep the supporting hip organized as the working leg lifts",
+        "level": "Foundational",
+        "duration": "00:30",
+        "analysis": "arabesque",
     },
 }
 
@@ -151,6 +181,11 @@ def result_paths(slug: str) -> dict[str, Path]:
     result_dir = demo_dir if demo_dir.exists() else RESULTS_DIR / f"{slug}_results"
     technique_name = "turnout_proxy_results.csv" if slug == "tendu_front_alignment" else "technique_results.csv"
     return {"feedback": result_dir / "feedback_video.mp4", "annotated": result_dir / "annotated_sample.jpg", "technique": result_dir / technique_name}
+
+
+def local_reference_videos(slug: str, camera_view: str) -> list[Path]:
+    """Return available local reference clips for the lesson and camera setup."""
+    return [path for path in LOCAL_REFERENCE_VIDEOS.get((slug, camera_view), []) if path.exists()]
 
 
 def load_technique_data(path: Path) -> pd.DataFrame | None:
