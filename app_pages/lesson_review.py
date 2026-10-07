@@ -1,19 +1,19 @@
-import base64
 import tempfile
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from app_core import LESSONS, load_technique_data
+from app_core import LESSONS, load_reference_profile, load_technique_data
 
 try:
     import cv2
-except ModuleNotFoundError:
+except (ImportError, ModuleNotFoundError):
+    # Hosted environments may have an incompatible optional OpenCV build.
+    # The app can still run in preview mode without computer-vision analysis.
     cv2 = None
 
 
-BACKGROUND_PATH = Path(__file__).resolve().parents[1] / "assets" / "ballet_studio_barre_background.png"
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 MAX_UPLOAD_SECONDS = 60
 
@@ -117,28 +117,31 @@ def process_uploaded_tendu(video_bytes: bytes, filename: str, camera_view: str) 
     }
 
 
-if BACKGROUND_PATH.exists():
-    encoded_background = base64.b64encode(BACKGROUND_PATH.read_bytes()).decode("ascii")
-    st.markdown(
-        f"""<style>
-        .stApp {{
-            background-image: linear-gradient(rgba(255, 252, 247, 0.88), rgba(255, 252, 247, 0.92)),
-                              url('data:image/png;base64,{encoded_background}');
-            background-size: cover;
-            background-attachment: fixed;
-        }}
-        </style>""",
-        unsafe_allow_html=True,
-    )
-
-st.title("Practice review")
-st.write("Upload one short clip, choose the camera angle, and get one focused practice cue.")
+st.markdown('<div class="eyebrow">Technique assessment · lesson review</div>', unsafe_allow_html=True)
+st.title("Practice review", icon=":material/ondemand_video:")
+st.markdown('<p class="lede">Upload one short clip, choose the camera angle, and receive a focused, camera-aware practice report.</p>', unsafe_allow_html=True)
 
 selected_lesson = st.selectbox("Choose a lesson", list(LESSONS), index=0)
 lesson = LESSONS[selected_lesson]
+reference = load_reference_profile(lesson["slug"])
 with st.container(border=True):
-    st.markdown(f"**{selected_lesson}**  ·  {lesson['level']}")
+    st.markdown(f'<div class="report-kicker">Selected lesson</div><h3 style="margin:.3rem 0 .2rem">{selected_lesson}</h3>', unsafe_allow_html=True)
+    st.caption(lesson["level"])
     st.write(lesson["description"])
+
+with st.container(border=True):
+    st.subheader("Reference-based analysis", icon=":material/compare_arrows:")
+    if reference.get("status") == "configured" and reference.get("reference_video"):
+        st.success("A teacher-approved reference is configured for this lesson.", icon=":material/check_circle:")
+        st.write("Future reviews will compare this attempt with the reference across the selected technique measures.")
+    else:
+        st.info("A reference example has not been added yet. This lesson is ready for one teacher-approved clip.", icon=":material/video_library:")
+        st.write(reference.get("description", "Add a teacher-approved reference clip for this lesson."))
+    comparison_metrics = reference.get("comparison_metrics", [])
+    if comparison_metrics:
+        st.caption("Planned comparison measures: " + " · ".join(str(metric) for metric in comparison_metrics))
+    if reference.get("notes"):
+        st.caption(str(reference["notes"]))
 
 if lesson.get("analysis") in ("plie", "tendu"):
     camera_view = st.selectbox(
@@ -164,9 +167,9 @@ if lesson.get("analysis") in ("plie", "tendu"):
     )
     if uploaded_file is None:
         with st.container(border=True):
-            st.subheader("Upload a clip to begin")
+            st.subheader("Upload a clip to begin", icon=":material/upload_file:")
             st.write("Your video will be analyzed after you upload it. No example video is loaded.")
-            st.caption("Supported formats: MP4, MOV, and M4V · Maximum length: 60 seconds")
+            st.caption("MP4, MOV, or M4V · Maximum length: 60 seconds · One dancer, full body in frame")
         st.stop()
 
     if uploaded_file is not None:
@@ -208,6 +211,33 @@ if technique is not None and not technique.empty:
     total_frames = len(pd.read_csv(technique_path))
     pose_quality = len(technique) / max(total_frames, 1)
 
+if pose_quality is not None:
+    score = round(max(0, min(100, pose_quality * 100)))
+    score_label = "Strong tracking" if score >= 80 else "Review conditions" if score >= 60 else "Priority: improve capture"
+    score_class = "strong" if score >= 80 else "watch" if score >= 60 else "priority"
+else:
+    score, score_label, score_class = None, "Hosted preview mode", "watch"
+
+st.markdown('<div class="eyebrow" style="margin-top:2rem">Assessment report</div>', unsafe_allow_html=True)
+st.subheader("Your movement review", icon=":material/insights:")
+score_col, summary_col = st.columns([1, 2], gap="large")
+with score_col:
+    if score is None:
+        score_markup = '<div class="score">—</div>'
+        note = "Tracking confidence will appear when measurements are available."
+    else:
+        score_markup = f'<div class="score">{score}<span style="font:600 1rem Inter, sans-serif"> / 100</span></div>'
+        note = "Based on usable pose frames, not a ballet grade."
+    st.markdown(f'<div class="score-panel"><div class="score-label">Overall capture confidence</div>{score_markup}<div class="score-note">{note}</div></div>', unsafe_allow_html=True)
+with summary_col:
+    st.markdown('<div class="report-kicker">Executive read</div>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="margin:.35rem 0 .5rem">{score_label}</h3>', unsafe_allow_html=True)
+    if score is not None and score >= 80:
+        st.markdown('<div class="assessment-note">The clip provides a clear enough view for the selected technique cue. Use the feedback below to make one small correction, then repeat the same phrase.</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="assessment-note">Treat this review as directional practice guidance. Consistent camera distance, lighting, and a full-body frame will make the next assessment more reliable.</div>', unsafe_allow_html=True)
+    st.markdown(f'<span class="status-chip {score_class}" style="margin-top:.8rem">{score_label}</span>', unsafe_allow_html=True)
+
 video_col, cue_col = st.columns([1.55, 1], gap="large")
 with video_col:
     with st.container(border=True):
@@ -247,6 +277,10 @@ with cue_col:
         else:
             st.warning("Some frames were difficult to track. Treat this correction as tentative and improve the lighting or camera distance next time.")
         st.write(f"{detail} Use the on-screen cue as a practice reminder—not as a grade.")
+        st.markdown("#### Strengths")
+        st.write("You completed a focused repetition with a clear technique target and a consistent camera view.")
+        st.markdown("#### Area to improve")
+        st.write(f"Prioritize one adjustment: {focus_text.lower()}.")
         st.success("Try one slower repetition, then replay the clip.", icon=":material/replay:")
 
     if annotated_path.exists():

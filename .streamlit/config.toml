@@ -1,10 +1,21 @@
 [theme]
 base = "light"
-primaryColor = "#8B5E68"
-backgroundColor = "#FBF8F5"
-secondaryBackgroundColor = "#F1E9E5"
-textColor = "#30282A"
-font = "sans serif"
+primaryColor = "#17324D"
+backgroundColor = "#FBF9F6"
+secondaryBackgroundColor = "#F3EEE9"
+textColor = "#24303B"
+linkColor = "#8F5261"
+borderColor = "#DEDBD6"
+greenColor = "#2F7A5B"
+orangeColor = "#9A6A16"
+redColor = "#A64745"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Cormorant Garamond:https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap"
+baseRadius = "10px"
+buttonRadius = "9px"
+showWidgetBorder = true
+headingFontSizes = ["48px", "32px", "24px", "18px", "15px", "13px"]
+headingFontWeights = [600, 600, 600, 600, 600, 600]
 
 [client]
 showErrorDetails = "type"
