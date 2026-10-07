@@ -1,5 +1,5 @@
 streamlit==1.64.0
-pandas==3.0.6
+pandas==2.2.3
 certifi>=2024.2.2
 # MediaPipe 0.10.18 ships Linux wheels through Python 3.12.
 # Community Cloud should be configured to use Python 3.12 for full analysis.
