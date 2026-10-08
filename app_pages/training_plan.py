@@ -1,6 +1,6 @@
 import streamlit as st
 
-from app_core import CORRECTION_PATHWAYS
+from app_core import CORRECTION_PATHWAYS, recommend_tiktok_clips
 
 
 st.title("Personalized training plan")
@@ -48,6 +48,19 @@ with st.container(border=True):
     st.write(pathway["summary"])
     st.info(f"Practice cue: {pathway['cue']}")
     st.caption(f"Personalized for: {practice_stage.lower()}")
+
+tiktok_clips = recommend_tiktok_clips(selected_name, st.session_state.training_plan_level, practice_stage)
+with st.container(border=True):
+    st.subheader("Recommended TikTok tips")
+    st.caption("Optional coaching examples matched to this correction. These do not affect your analysis or score.")
+    if not tiktok_clips:
+        st.info("Teacher-reviewed TikTok tips will appear here as the recommendation library is added.")
+    else:
+        for clip in tiktok_clips:
+            st.markdown(f"**{clip.get('title', 'Technique tip')}** · {clip.get('creator', 'TikTok creator')}")
+            if clip.get("takeaway"):
+                st.write(clip["takeaway"])
+            st.link_button("Watch on TikTok", str(clip["url"]), width="content")
 
 st.subheader("Your weekly structure")
 schedule = [
