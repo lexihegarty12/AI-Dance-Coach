@@ -11,7 +11,6 @@ REFERENCE_BENCHMARK_DIR = RESULTS_DIR / "reference_benchmarks"
 DEMO_RESULTS_DIR = ROOT / "demo_assets"
 ANNOTATIONS_PATH = ROOT / "data" / "coaching_annotations.json"
 REFERENCE_LIBRARY_PATH = ROOT / "data" / "reference_library.json"
-TIKTOK_RECOMMENDATIONS_PATH = ROOT / "data" / "tiktok_recommendations.json"
 REFERENCE_VIDEO_DIR = ROOT / "Reference Videos"
 
 LOCAL_REFERENCE_VIDEOS = {
@@ -265,42 +264,3 @@ def recommend_video_clips(
         return score_value
 
     return sorted(videos, key=score, reverse=True)
-
-
-def load_tiktok_recommendations() -> list[dict[str, object]]:
-    """Load manually reviewed TikTok tips without making network requests."""
-    if not TIKTOK_RECOMMENDATIONS_PATH.exists():
-        return []
-    try:
-        payload = json.loads(TIKTOK_RECOMMENDATIONS_PATH.read_text())
-    except (OSError, json.JSONDecodeError):
-        return []
-    return payload if isinstance(payload, list) else []
-
-
-def recommend_tiktok_clips(
-    correction_name: str,
-    level: str,
-    practice_stage: str,
-    limit: int = 3,
-) -> list[dict[str, object]]:
-    """Rank reviewed TikTok tips for a specific practice correction."""
-    pathway = CORRECTION_PATHWAYS.get(correction_name, {})
-    issue = pathway.get("issue")
-    level_rank = {"Foundational": 0, "Developing": 1, "Intermediate": 2}
-    target_level = level_rank.get(level, 0)
-
-    def score(video: dict[str, object]) -> int:
-        score_value = 0
-        if issue in video.get("issues", []):
-            score_value += 6
-        if practice_stage in video.get("stages", []):
-            score_value += 4
-        if level in video.get("levels", []):
-            score_value += 3
-        elif any(level_rank.get(item, 0) <= target_level for item in video.get("levels", [])):
-            score_value += 1
-        return score_value
-
-    matches = [video for video in load_tiktok_recommendations() if video.get("url")]
-    return sorted(matches, key=score, reverse=True)[:limit]
